@@ -1,0 +1,10 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Admin – RoomDirect</title><link rel="stylesheet" href="css/style.css"></head><body><header class="top"><a class="logo" href="index.html">RoomDirect</a><nav id="nav"></nav></header><main class="wrap" id="app"></main><footer class="wrap note">Prototype: sample data, simulated payments, data stays in your browser.</footer><script src="js/app.js"></script><script>
+guard('admin').then(u=>{if(u)draw()});
+function draw(){
+ const bk=DB.bookings,L=DB.users.filter(u=>u.role==='landlord');
+ $('#app').innerHTML=`<h1>Admin</h1><div class="stats"><div class="stat"><span>Bookings</span><b>${bk.length}</b></div><div class="stat"><span>Platform earnings</span><b>${N(bk.length*APP_FEE)}</b></div><div class="stat"><span>Owner payouts</span><b>${N(bk.reduce((a,b)=>a+b.rent,0))}</b></div><div class="stat"><span>School commissions</span><b>${N(bk.length*SCH_FEE)}</b></div></div>
+ <h2>Landlords</h2><div class="tbl"><table><tr><th>Name</th><th>Contact</th><th>School</th><th>ID</th><th>Status</th><th></th></tr>${L.map(l=>`<tr><td>${E(l.name)}</td><td>${E(l.email)}<br>${E(l.phone)}</td><td>${SCHOOLS[l.school]}</td><td><div class="th" style="width:70px" data-m="${l.idMedia||''}"></div></td><td>${l.verified?'Verified':'Pending'}</td><td><button class="btn alt" data-v="${l.id}">${l.verified?'Revoke':'Verify'}</button></td></tr>`).join('')}</table></div>
+ <h2>Bookings</h2>`+(bk.length?'<div class="tbl"><table><tr><th>Ref</th><th>Hostel</th><th>Room</th><th>Rent</th><th>Total paid</th></tr>'+bk.map(b=>`<tr><td>${b.ref}</td><td>${E(b.hname)}</td><td>${E(b.rtype)}</td><td>${N(b.rent)}</td><td>${N(b.rent+APP_FEE+SCH_FEE)}</td></tr>`).join('')+'</table></div>':'<div class="empty">No bookings yet.</div>');
+ document.querySelectorAll('.th').forEach(t=>t.dataset.m&&mediaEl(t.dataset.m).then(e=>e&&t.append(e)));
+ document.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>{const l=DB.users.find(x=>x.id===b.dataset.v);l.verified=!l.verified;save();draw()});
+}</script></body></html>

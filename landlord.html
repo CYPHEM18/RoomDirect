@@ -1,0 +1,27 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Landlord dashboard – RoomDirect</title><link rel="stylesheet" href="css/style.css"></head><body><header class="top"><a class="logo" href="index.html">RoomDirect</a><nav id="nav"></nav></header><main class="wrap" id="app"></main><footer class="wrap note">Prototype: sample data, simulated payments, data stays in your browser.</footer><script src="js/app.js"></script><script>
+let U;guard('landlord').then(u=>{if(u){U=u;draw()}});
+const TYPES=['Single','Shared (2)','Shared (4)','Self-contained'];
+async function draw(){
+ const mine=DB.hostels.filter(h=>h.owner===U.id);
+ $('#app').innerHTML=`<h1>Landlord dashboard</h1>
+ <div class="notice ${U.verified?'ok':''}">${U.verified?'Your account is verified. Students see the Verified badge.':'Your account is awaiting review. You can list now; the Verified badge shows after approval.'}</div>
+ <p class="err" id="msg" role="alert"></p>
+ <section class="panel"><h2>Add a hostel</h2><form id="hf"><label for="hn">Hostel name</label><input id="hn" required><div class="row"><div><label for="hl">Area</label><input id="hl" required></div><div><label for="hk">Distance to campus (km)</label><input id="hk" type="number" step="0.1" min="0" required></div></div><label for="hd">Description</label><textarea id="hd" rows="2"></textarea><p></p><button class="btn">Add hostel</button></form></section>
+ <h2>Your hostels</h2>`+(mine.length?mine.map(h=>`<section class="panel"><h3>${E(h.name)}</h3><div class="meta">${E(h.loc)} · ${SCHOOLS[h.school]}</div>
+ <h4>Photos and videos (${h.media.length}/${LIM.max})</h4><div class="thumbs">${h.media.map(m=>`<div class="th" data-m="${m.id}"><button class="x" data-act="rm" data-h="${h.id}" data-m="${m.id}" aria-label="Remove">×</button></div>`).join('')}</div>
+ <div class="row"><input type="file" multiple accept="image/*,video/*" data-up="${h.id}" aria-label="Choose photos or videos"><button class="btn" data-act="up" data-h="${h.id}">Upload</button></div><p class="meta">Photos up to 5 MB, videos up to 25 MB.</p>
+ <h4>Rooms</h4>${h.rooms.map(r=>`<div class="room"><span>${E(r.type)}</span><span><b>${N(r.price)}</b> · ${r.left} left</span></div>`).join('')||'<p class="meta">No rooms yet. Add one so students can see this hostel.</p>'}
+ <div class="row"><select data-rt="${h.id}" aria-label="Room type">${TYPES.map(t=>`<option>${t}</option>`).join('')}</select><input type="number" min="1" placeholder="Price per session (₦)" data-rp="${h.id}"><input type="number" min="1" value="1" data-rc="${h.id}" aria-label="Rooms available"><button class="btn" data-act="room" data-h="${h.id}">Add room</button></div></section>`).join(''):'<div class="empty">No hostels yet.</div>');
+ for(const t of document.querySelectorAll('.th')){const e=await mediaEl(t.dataset.m);if(e)t.prepend(e)}
+}
+document.addEventListener('submit',e=>{if(e.target.id!=='hf')return;e.preventDefault();
+ DB.hostels.push({id:uid('h'),owner:U.id,school:U.school,name:$('#hn').value.trim(),loc:$('#hl').value.trim(),km:+$('#hk').value,desc:$('#hd').value.trim(),media:[],rooms:[]});save();draw()});
+document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]');if(!b||!U)return;
+ const h=DB.hostels.find(x=>x.id===b.dataset.h&&x.owner===U.id);if(!h)return;
+ try{
+  if(b.dataset.act==='rm'){h.media=h.media.filter(m=>m.id!==b.dataset.m);await delMedia(b.dataset.m);save();draw()}
+  if(b.dataset.act==='up'){const fs=[...$(`[data-up="${h.id}"]`).files];if(!fs.length)throw Error('Choose at least one photo or video.');
+   for(const f of fs){const k=checkFile(f);if(h.media.length>=LIM.max)throw Error('Limit reached: '+LIM.max+' files per hostel.');h.media.push({id:await putMedia(f),kind:k});save()}draw()}
+  if(b.dataset.act==='room'){const p=+$(`[data-rp="${h.id}"]`).value,c=+$(`[data-rc="${h.id}"]`).value;if(!(p>0)||!(c>0))throw Error('Enter a price and number of rooms.');
+   h.rooms.push({id:uid('r'),type:$(`[data-rt="${h.id}"]`).value,price:p,left:c});save();draw()}
+ }catch(x){draw().then(()=>show(x.message))}});</script></body></html>
