@@ -2,12 +2,14 @@
 let U;guard('landlord').then(u=>{if(u){U=u;draw()}});
 const TYPES=['Single','Shared (2)','Shared (4)','Self-contained'];
 async function draw(){
- const mine=DB.hostels.filter(h=>h.owner===U.id);
+ const mine=DB.hostels.filter(h=>h.owner===U.id),ids=mine.map(h=>h.id),bk=DB.bookings.filter(b=>ids.includes(b.hostel)).reverse();
  $('#app').innerHTML=`<h1>Landlord dashboard</h1>
  <div class="notice ${U.verified?'ok':''}">${U.verified?'Your account is verified. Students see the Verified badge.':'Your account is awaiting review. You can list now; the Verified badge shows after approval.'}</div>
  <p class="err" id="msg" role="alert"></p>
- <section class="panel"><h2>Add a hostel</h2><form id="hf"><label for="hn">Hostel name</label><input id="hn" required><div class="row"><div><label for="hl">Area</label><input id="hl" required></div><div><label for="hk">Distance to campus (km)</label><input id="hk" type="number" step="0.1" min="0" required></div></div><label for="hd">Description</label><textarea id="hd" rows="2"></textarea><p></p><button class="btn">Add hostel</button></form></section>
- <h2>Your hostels</h2>`+(mine.length?mine.map(h=>`<section class="panel"><h3>${E(h.name)}</h3><div class="meta">${E(h.loc)} · ${SCHOOLS[h.school]}</div>
+ <section class="panel"><h2>Confirm a check-in</h2><p class="meta">When a student arrives, enter their booking code. They pay you the rent directly.</p><div class="row"><input id="cref" placeholder="RD-XXXXXX" aria-label="Booking code"><button class="btn" id="ci">Confirm check-in</button></div>
+ ${bk.length?'<div class="tbl"><table><tr><th>Code</th><th>Student</th><th>Hostel</th><th>Room</th><th>Rent to collect</th><th>Status</th></tr>'+bk.map(b=>{const s=DB.users.find(x=>x.id===b.student)||{};return `<tr><td>${b.ref}</td><td>${E(s.name)}<br><span class="meta">${E(s.matric)}</span></td><td>${E(b.hname)}</td><td>${E(b.rtype)}</td><td>${N(b.rent)}</td><td>${b.status||'Booked'}</td></tr>`}).join('')+'</table></div>':''}</section>
+ <section class="panel"><h2>Add a hostel</h2><form id="hf"><label for="hn">Hostel name</label><input id="hn" required><div class="row"><div><label for="hl">Area</label><input id="hl" required></div><div><label for="hk">Distance to campus (km)</label><input id="hk" type="number" step="0.1" min="0" required></div></div><label for="hd">Description</label><textarea id="hd" rows="2"></textarea><label>Amenities</label><div class="chips" id="ha">${AMEN.map(a=>`<label class="chip"><input type="checkbox" value="${a}"> ${a}</label>`).join('')}</div><button class="btn">Add hostel</button></form></section>
+ <h2>Your hostels</h2>`+(mine.length?mine.map(h=>`<section class="panel"><h3>${E(h.name)}</h3><div class="meta">${E(h.loc)} · ${SCHOOLS[h.school]}</div><div class="chips">${(h.amen||[]).map(a=>`<span class="chip">${E(a)}</span>`).join('')}</div>
  <h4>Photos and videos (${h.media.length}/${LIM.max})</h4><div class="thumbs">${h.media.map(m=>`<div class="th" data-m="${m.id}"><button class="x" data-act="rm" data-h="${h.id}" data-m="${m.id}" aria-label="Remove">×</button></div>`).join('')}</div>
  <div class="row"><input type="file" multiple accept="image/*,video/*" data-up="${h.id}" aria-label="Choose photos or videos"><button class="btn" data-act="up" data-h="${h.id}">Upload</button></div><p class="meta">Photos up to 5 MB, videos up to 25 MB.</p>
  <h4>Rooms</h4>${h.rooms.map(r=>`<div class="room"><span>${E(r.type)}</span><span><b>${N(r.price)}</b> · ${r.left} left</span></div>`).join('')||'<p class="meta">No rooms yet. Add one so students can see this hostel.</p>'}
@@ -15,8 +17,11 @@ async function draw(){
  for(const t of document.querySelectorAll('.th')){const e=await mediaEl(t.dataset.m);if(e)t.prepend(e)}
 }
 document.addEventListener('submit',e=>{if(e.target.id!=='hf')return;e.preventDefault();
- DB.hostels.push({id:uid('h'),owner:U.id,school:U.school,name:$('#hn').value.trim(),loc:$('#hl').value.trim(),km:+$('#hk').value,desc:$('#hd').value.trim(),media:[],rooms:[]});save();draw()});
-document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]');if(!b||!U)return;
+ DB.hostels.push({id:uid('h'),owner:U.id,school:U.school,name:$('#hn').value.trim(),loc:$('#hl').value.trim(),km:+$('#hk').value,desc:$('#hd').value.trim(),amen:[...document.querySelectorAll('#ha input:checked')].map(i=>i.value),media:[],rooms:[]});save();draw()});
+document.addEventListener('click',async e=>{if(!U)return;
+ if(e.target.id==='ci'){const ref=$('#cref').value.trim().toUpperCase(),ids=DB.hostels.filter(h=>h.owner===U.id).map(h=>h.id),b=DB.bookings.find(x=>x.ref===ref&&ids.includes(x.hostel));
+  if(!b){show('No booking with that code for your hostels.');return}b.status='Checked in';save();draw();return}
+ const b=e.target.closest('[data-act]');if(!b)return;
  const h=DB.hostels.find(x=>x.id===b.dataset.h&&x.owner===U.id);if(!h)return;
  try{
   if(b.dataset.act==='rm'){h.media=h.media.filter(m=>m.id!==b.dataset.m);await delMedia(b.dataset.m);save();draw()}
