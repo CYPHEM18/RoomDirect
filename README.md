@@ -2,7 +2,12 @@
 
 Campus hostel marketplace for Nigerian students. **Prototype only**: data is stored in the visitor's own browser, payments are simulated, and login is client-side, so it is NOT secure.
 
+## Fees
+Students pay a ₦6,000 booking fee online (₦5,000 platform + ₦1,000 school). Rent is paid to the owner at check-in; the owner confirms arrival with the booking code.
+
 ## Pages
+- `messages.html` demo student/owner chat (single browser only)
+- `school.html` school commission dashboard
 - `index.html` browse and filter hostels
 - `hostel.html?id=` photos, videos, rooms, demo booking
 - `register-student.html`, `register-landlord.html`, `login.html`
@@ -11,6 +16,7 @@ Campus hostel marketplace for Nigerian students. **Prototype only**: data is sto
 ## Demo accounts
 - Landlord: landlord@roomdirect.test / landlord1234
 - Admin: admin@roomdirect.test / admin1234
+- School: school@roomdirect.test / school1234
 
 ## Run locally
     npx serve .
