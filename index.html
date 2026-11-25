@@ -1,14 +1,15 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Browse hostels – RoomDirect</title><link rel="stylesheet" href="css/style.css"></head><body><header class="top"><a class="logo" href="index.html">RoomDirect</a><nav id="nav"></nav></header><main class="wrap" id="app"><h1>Find a hostel, skip the agent</h1><p class="meta">Pay the owner’s price plus a flat ₦3,000 platform fee.</p>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Browse hostels – RoomDirect</title><link rel="stylesheet" href="css/style.css"></head><body><header class="top"><a class="logo" href="index.html">RoomDirect</a><nav id="nav"></nav></header><main class="wrap" id="app"><h1>Find a hostel, skip the agent</h1><p class="meta">Pay a flat ₦6,000 booking fee now. Pay the owner’s rent when you arrive.</p>
 <div class="row"><select id="fs" aria-label="School"></select><input id="fq" placeholder="Search name or area" aria-label="Search"><input id="fm" type="number" min="0" placeholder="Max price (₦)" aria-label="Max price"></div>
-<div class="grid" id="grid"></div></main><footer class="wrap note">Prototype: sample data, simulated payments, data stays in your browser.</footer><script src="js/app.js"></script><script>
+<div class="chips" id="am"></div><div class="grid" id="grid"></div></main><footer class="wrap note">Prototype: sample data, simulated payments, data stays in your browser.</footer><script src="js/app.js"></script><script>
 ready.then(()=>{
  $('#fs').innerHTML='<option value="">All schools</option>'+Object.entries(SCHOOLS).map(([k,v])=>`<option value="${k}">${v}</option>`).join('');
- ['fs','fm','fq'].forEach(i=>$('#'+i).addEventListener('input',draw));draw();
+ $('#am').innerHTML=AMEN.map(a=>`<label class="chip"><input type="checkbox" value="${a}"> ${a}</label>`).join('');
+ document.querySelectorAll('#fs,#fm,#fq,#am input').forEach(i=>i.addEventListener('input',draw));draw();
 });
 function draw(){
- const s=$('#fs').value,mx=+$('#fm').value||Infinity,q=$('#fq').value.toLowerCase();
- const l=DB.hostels.filter(h=>(!s||h.school===s)&&(h.name+' '+h.loc).toLowerCase().includes(q)&&h.rooms.some(r=>r.price<=mx));
- $('#grid').innerHTML=l.length?l.map(h=>{const o=DB.users.find(u=>u.id===h.owner),p=Math.min(...h.rooms.map(r=>r.price)),left=h.rooms.reduce((a,r)=>a+r.left,0);
-  return `<a class="card" href="hostel.html?id=${h.id}"><div class="cover" id="c${h.id}"></div><div class="pad"><h3>${E(h.name)}</h3><div class="meta">${E(h.loc)} · ${h.km} km · ${SCHOOLS[h.school]}</div><div><b>From ${N(p)}</b> <span class="meta">· ${left} rooms left</span></div>${o&&o.verified?'<span class="badge">Verified owner</span>':'<span class="badge off">Awaiting verification</span>'}</div></a>`}).join(''):'<div class="empty">No hostels match. A hostel appears once its owner adds at least one room.</div>';
+ const s=$('#fs').value,mx=+$('#fm').value||Infinity,q=$('#fq').value.toLowerCase(),need=[...document.querySelectorAll('#am input:checked')].map(i=>i.value);
+ const l=DB.hostels.filter(h=>(!s||h.school===s)&&(h.name+' '+h.loc).toLowerCase().includes(q)&&h.rooms.some(r=>r.price<=mx)&&need.every(a=>(h.amen||[]).includes(a)));
+ $('#grid').innerHTML=l.length?l.map(h=>{const o=DB.users.find(u=>u.id===h.owner),p=Math.min(...h.rooms.map(r=>r.price)),left=h.rooms.reduce((a,r)=>a+r.left,0),r=rating(h);
+  return `<a class="card" href="hostel.html?id=${h.id}"><div class="cover" id="c${h.id}"></div><div class="pad"><h3>${E(h.name)}</h3><div class="meta">${E(h.loc)} · ${h.km} km · ${SCHOOLS[h.school]}</div><div><b>From ${N(p)}</b> <span class="meta">· ${left} rooms left</span></div>${r?`<div class="stars">${stars(r.avg)} <span class="meta">${r.avg.toFixed(1)} (${r.n})</span></div>`:'<div class="meta">No reviews yet</div>'}${o&&o.verified?'<span class="badge">Verified owner</span>':'<span class="badge off">Awaiting verification</span>'}</div></a>`}).join(''):'<div class="empty">No hostels match. A hostel appears once its owner adds at least one room.</div>';
  l.forEach(h=>h.media[0]&&fill($('#c'+h.id),h.media[0]));
 }</script></body></html>
