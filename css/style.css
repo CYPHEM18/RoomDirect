@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 :root{--bg:#F3F6F4;--surface:#fff;--ink:#14231C;--muted:#5B6B63;--line:#D9E2DD;--brand:#0B6B4B;--on:#fff;--accent:#E8A317;--bad:#B3261E;color-scheme:light}
 @media (prefers-color-scheme:dark){:root{--bg:#0F1714;--surface:#17211D;--ink:#E8EFEB;--muted:#93A59B;--line:#2A3A33;--brand:#3FB98A;--on:#08241A;--bad:#F2877F;color-scheme:dark}}
 *,*::before,*::after{box-sizing:border-box}
@@ -41,3 +42,29 @@ label{display:block;font-size:14px;color:var(--muted);margin:10px 0 4px}
 .chat{display:grid;grid-template-columns:minmax(150px,220px) 1fr;gap:14px}@media(max-width:640px){.chat{grid-template-columns:1fr}}
 .msgs{height:320px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;padding:10px;background:var(--bg);border:1px solid var(--line);border-radius:10px}
 .bub{max-width:80%;padding:8px 12px;border-radius:12px;background:var(--surface);border:1px solid var(--line);align-self:flex-start;overflow-wrap:anywhere}.bub.me{align-self:flex-end;background:var(--brand);color:var(--on);border-color:var(--brand)}
+
+/* ---- polish pass ---- */
+body{font-family:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+h1,h2,h3{letter-spacing:-.02em;font-weight:800}h1{font-size:clamp(26px,5vw,36px)}
+.top{position:sticky;top:0;z-index:10;background:color-mix(in srgb,var(--surface) 88%,transparent);backdrop-filter:blur(10px)}
+.logo{font-weight:800;letter-spacing:-.03em}
+nav a{font-weight:500;border-radius:8px;padding:8px 10px}nav a:hover{background:var(--line)}
+.btn{border-radius:999px;padding:12px 22px;font-weight:700;box-shadow:0 2px 8px rgba(11,107,75,.25);transition:transform .15s,filter .15s}
+.btn:hover{transform:translateY(-1px);filter:brightness(1.07)}.btn.alt{box-shadow:none}
+input,select,textarea{border-radius:12px}
+.hero{background:linear-gradient(135deg,#0B6B4B,#0A3D2C);color:#fff;border-radius:24px;padding:32px 22px;margin-bottom:20px;position:relative;overflow:hidden}
+.hero::after{content:"";position:absolute;right:-60px;top:-60px;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,rgba(232,163,23,.55),transparent 70%)}
+.hero h1,.hero p{color:#fff;position:relative;z-index:1;margin:0 0 10px}.hero p{opacity:.92;max-width:520px;font-size:17px}
+.pills{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;position:relative;z-index:1}.pill{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.25);padding:6px 14px;border-radius:99px;font-size:13px;font-weight:600}
+.card,.panel{border-radius:18px;box-shadow:0 1px 2px rgba(0,0,0,.04),0 8px 24px rgba(0,0,0,.05)}
+.card{transition:transform .2s,box-shadow .2s}.card:hover{transform:translateY(-3px);box-shadow:0 12px 32px rgba(0,0,0,.12)}
+.cover{height:180px;background:radial-gradient(circle at 20% 20%,rgba(255,255,255,.3),transparent 45%),linear-gradient(135deg,#0B6B4B,#E8A317)}
+.pad{padding:14px 16px 16px}.pad b{font-size:18px}
+.chip{cursor:pointer;transition:background .15s}.chip:has(input:checked){background:var(--brand);color:var(--on);border-color:var(--brand)}
+.badge{font-size:12px;padding:3px 10px}
+.gal{gap:10px}.gal>div{border-radius:16px}
+@media(min-width:700px){.gal{grid-template-columns:repeat(4,1fr)}.gal>div:first-child{grid-column:span 2;grid-row:span 2;aspect-ratio:auto;min-height:260px}}
+.room{padding:14px 0}.room b{font-size:20px}
+.lines .tot{font-size:20px}
+.notice{border-radius:14px}.stat{border-radius:16px}.stat b{font-size:26px}.tbl{border-radius:16px}
+.empty{border:2px dashed var(--line);border-radius:16px}
