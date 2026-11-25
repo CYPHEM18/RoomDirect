@@ -2,23 +2,38 @@
 ready.then(()=>{
  const h=DB.hostels.find(x=>x.id===Q.get('id')),A=$('#app');
  if(!h){A.innerHTML='<div class="empty">Hostel not found. <a href="index.html">Back to hostels</a></div>';return}
- const o=DB.users.find(u=>u.id===h.owner);
+ const o=DB.users.find(u=>u.id===h.owner),r=rating(h);
  A.innerHTML=`<a href="index.html">← All hostels</a><h1>${E(h.name)}</h1><div class="meta">${E(h.loc)} · ${h.km} km from campus · ${SCHOOLS[h.school]} · Owner: ${E(o?o.name:'')} ${o&&o.verified?'<span class="badge">Verified</span>':'<span class="badge off">Unverified</span>'}</div>
- <div class="gal" id="gal"></div><p>${E(h.desc||'')}</p><h2>Rooms</h2><div class="panel" id="rooms"></div><div id="co"></div>`;
+ ${r?`<div class="stars">${stars(r.avg)} <span class="meta">${r.avg.toFixed(1)} from ${r.n} review${r.n>1?'s':''}</span></div>`:''}
+ <div class="chips">${(h.amen||[]).map(a=>`<span class="chip">${E(a)}</span>`).join('')}</div>
+ <div class="gal" id="gal"></div><p>${E(h.desc||'')}</p><button class="btn alt" id="mo">Message owner</button>
+ <h2>Rooms</h2><div class="panel" id="rooms"></div><div id="co"></div><h2>Reviews</h2><div id="rv"></div>`;
  if(!h.media.length)$('#gal').outerHTML='<div class="empty">The owner has not added photos or videos yet.</div>';
  h.media.forEach(m=>{const d=document.createElement('div');$('#gal').append(d);fill(d,m)});
  $('#rooms').innerHTML=h.rooms.map(r=>`<div class="room"><div><b>${N(r.price)}</b> <span class="meta">${E(r.type)} · ${r.left?r.left+' left':'Fully booked'}</span></div><button class="btn" data-r="${r.id}"${r.left?'':' disabled'}>Book</button></div>`).join('')||'<p class="meta">No rooms listed yet.</p>';
  $('#rooms').onclick=e=>{const b=e.target.closest('[data-r]');if(b)book(h,b.dataset.r)};
+ $('#mo').onclick=()=>{const u=me();if(!u){location.href='login.html?next='+encodeURIComponent('hostel.html?id='+h.id);return}
+  if(u.role!=='student'){$('#co').innerHTML='<div class="notice">Only student accounts can message owners.</div>';return}location.href='messages.html?to='+h.owner};
+ reviews(h);
 });
+function reviews(h){
+ const u=me(),rs=DB.reviews.filter(x=>x.hostel===h.id).reverse();
+ const can=u&&u.role==='student'&&DB.bookings.some(b=>b.student===u.id&&b.hostel===h.id)&&!rs.some(x=>x.user===u.id);
+ $('#rv').innerHTML=(rs.length?rs.map(x=>`<div class="panel"><span class="stars">${stars(x.stars)}</span> <b>${E(x.name)}</b><div>${E(x.text)}</div></div>`).join(''):'<p class="meta">No reviews yet.</p>')+
+ (can?`<div class="panel"><h3>Leave a review</h3><label for="rs">Rating</label><select id="rs"><option>5</option><option>4</option><option>3</option><option>2</option><option>1</option></select><label for="rt">Your experience</label><textarea id="rt" rows="3"></textarea><p class="err" id="msg" role="alert"></p><button class="btn" id="rb">Post review</button></div>`:'<p class="meta">Only students who booked this hostel can leave a review.</p>');
+ if(can)$('#rb').onclick=()=>{const t=$('#rt').value.trim();if(!t){show('Write a short review first.');return}
+  const p=u.name.trim().split(/\s+/),nm=p[0]+(p[1]?' '+p[1][0]+'.':'');
+  DB.reviews.push({id:uid('v'),hostel:h.id,user:u.id,name:nm,stars:+$('#rs').value,text:t});save();reviews(h)};
+}
 function book(h,rid){
  const u=me(),r=h.rooms.find(x=>x.id===rid),c=$('#co');
  if(!u){location.href='login.html?next='+encodeURIComponent('hostel.html?id='+h.id);return}
  if(u.role!=='student'){c.innerHTML='<div class="notice">Only student accounts can book rooms.</div>';return}
- const t=r.price+APP_FEE+SCH_FEE;
- c.innerHTML=`<div class="panel"><h2>Book ${E(r.type)} at ${E(h.name)}</h2><div class="lines"><div><span>Hostel fee (to owner)</span><span>${N(r.price)}</span></div><div><span>Platform maintenance</span><span>${N(APP_FEE)}</span></div><div><span>School commission</span><span>${N(SCH_FEE)}</span></div><div class="tot"><span>You pay</span><span>${N(t)}</span></div></div><p class="meta">Demo checkout. No money moves.</p><button class="btn" id="pay">Pay ${N(t)} (demo)</button></div>`;
+ const t=APP_FEE+SCH_FEE;
+ c.innerHTML=`<div class="panel"><h2>Book ${E(r.type)} at ${E(h.name)}</h2><div class="lines"><div><span>Platform booking fee</span><span>${N(APP_FEE)}</span></div><div><span>School commission</span><span>${N(SCH_FEE)}</span></div><div class="tot"><span>Pay now</span><span>${N(t)}</span></div></div><div class="notice">The rent of ${N(r.price)} is paid directly to the owner when you arrive. Show your booking code at check-in.</div><p class="meta">Demo checkout. No money moves.</p><button class="btn" id="pay">Pay ${N(t)} (demo)</button></div>`;
  c.scrollIntoView({behavior:'smooth'});
  $('#pay').onclick=()=>{
   if(r.left<1)return;r.left--;const ref='RD-'+Math.random().toString(36).slice(2,8).toUpperCase();
-  DB.bookings.push({id:uid('b'),ref,student:u.id,hostel:h.id,hname:h.name,rtype:r.type,rent:r.price,school:h.school,date:new Date().toISOString()});
+  DB.bookings.push({id:uid('b'),ref,student:u.id,hostel:h.id,hname:h.name,rtype:r.type,rent:r.price,school:h.school,status:'Booked',date:new Date().toISOString()});
   save();location.href='student.html?ok='+ref};
 }</script></body></html>
