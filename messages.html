@@ -1,0 +1,16 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Messages – RoomDirect</title><link rel="stylesheet" href="css/style.css"></head><body><header class="top"><a class="logo" href="index.html">RoomDirect</a><nav id="nav"></nav></header><main class="wrap" id="app"></main><footer class="wrap note">Prototype: sample data, simulated payments, data stays in your browser.</footer><script src="js/app.js"></script><script>
+let U,cur=null;
+(async()=>{await ready;U=me();if(!U||!['student','landlord'].includes(U.role)){location.href='login.html?next=messages.html';return}
+ const to=Q.get('to');if(to&&U.role==='student'&&DB.users.some(u=>u.id===to&&u.role==='landlord'))cur=U.id+'|'+to;draw()})();
+const cv=()=>{const s=new Set(DB.messages.filter(m=>m.convo.split('|').includes(U.id)).map(m=>m.convo));if(cur)s.add(cur);return[...s]};
+const who=c=>{const[s,o]=c.split('|');return DB.users.find(u=>u.id===(U.role==='student'?o:s))};
+function draw(){
+ const cs=cv();if(!cur&&cs.length)cur=cs[0];
+ $('#app').innerHTML=`<h1>Messages</h1><div class="notice">Demo only: messages stay in this browser. To try both sides, log in as a student, send a message, then log in as the landlord on the same device.</div><div class="chat"><div>${cs.map(c=>{const w=who(c);return `<button class="btn ${c===cur?'':'alt'}" style="width:100%;margin-bottom:6px;text-align:left" data-c="${c}">${E(w?w.name:'Unknown')}</button>`}).join('')||'<p class="meta">No conversations yet. Open a hostel and tap Message owner.</p>'}</div><div>${cur?thread():'<div class="empty">Select a conversation.</div>'}</div></div>`;
+ const m=$('.msgs');if(m)m.scrollTop=m.scrollHeight;
+}
+function thread(){const w=who(cur),ms=DB.messages.filter(m=>m.convo===cur);
+ return `<h3>${E(w?w.name:'')}</h3><div class="msgs">${ms.map(m=>`<div class="bub ${m.from===U.id?'me':''}">${E(m.text)}</div>`).join('')||'<p class="meta">Say hello and ask about water, light and distance.</p>'}</div><div class="row"><input id="mt" placeholder="Type a message" aria-label="Message"><button class="btn" id="send">Send</button></div><p class="meta">Phone numbers and links are hidden so bookings stay on RoomDirect.</p>`}
+function send(){const t=$('#mt').value.trim();if(!t||!cur)return;DB.messages.push({id:uid('g'),convo:cur,from:U.id,text:mask(t),date:Date.now()});save();draw()}
+document.addEventListener('click',e=>{const c=e.target.closest('[data-c]');if(c){cur=c.dataset.c;draw();return}if(e.target.id==='send')send()});
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='mt')send()});</script></body></html>
